@@ -54,7 +54,10 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-
+                    val currentState = lifeCycleOwner.lifecycle.currentState
+                    if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                        navController.navigate(Screen.AddTodoScreen.route)
+                    }
                 },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
@@ -82,10 +85,7 @@ fun HomeScreen(
                         createdAt = LocalDateTime.now(),
                         isCompleted = false,
                         onItemClicked = {
-                            val currentState = lifeCycleOwner.lifecycle.currentState
-                            if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-                                navController.navigate(Screen.AddTodoScreen.route)
-                            }
+
                         },
                         onCheckBoxClicked = {
 
