@@ -12,15 +12,18 @@ import kotlinx.coroutines.flow.map
 class UserPrefImpl(
     private val dataStore: DataStore<Preferences>
 ): UserPref {
-    override fun getUserToken(): Flow<String> {
-        return dataStore.data.catch { emit(emptyPreferences()) }.map {
-            it[USER_KEY] ?: ""
-        }
-        //return dataStore.data.first()[USER_KEY]
+//    override fun getUserToken(): Flow<String> {
 //        return dataStore.data.catch { emit(emptyPreferences()) }.map {
-//            it[USER_KEY]
-//        }.first()
-    }
+//            it[USER_KEY] ?: ""
+//        }
+//        //return dataStore.data.first()[USER_KEY]
+////        return dataStore.data.catch { emit(emptyPreferences()) }.map {
+////            it[USER_KEY]
+////        }.first()
+//    }
+    override fun getUserToken(): Flow<String> = dataStore.data.map { preferences ->
+        preferences[USER_KEY] ?: ""
+}
 
     override suspend fun saveUserToken(token: String) {
         dataStore.edit {

@@ -4,7 +4,11 @@ import com.example.todonode.data.remote.dto.LoginRequest
 import com.example.todonode.data.remote.dto.LoginResponse
 import com.example.todonode.data.remote.dto.RegisterRequest
 import com.example.todonode.data.remote.dto.RegisterResponse
+import com.example.todonode.data.remote.dto.TodoListResponse
+import com.example.todonode.data.remote.dto.TodoRequest
+import com.example.todonode.data.remote.dto.TodoResponse
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
@@ -21,4 +25,17 @@ interface TodoApi {
         @Body loginRequest: LoginRequest,
         @Header("Content-Type") contentType: String = "application/json"
     ): LoginResponse
+
+    @POST("api/todo")
+    suspend fun addTodo(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Header("Authorization") token: String,
+        @Body todo: TodoRequest
+    ): TodoResponse
+
+    @GET("api/todo")
+    suspend fun getTodos(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Header("Authorization") token: String
+    ): TodoListResponse
 }

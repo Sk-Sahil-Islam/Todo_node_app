@@ -130,7 +130,6 @@ class MainActivity : ComponentActivity() {
                         drawerContent = {
                             ModalDrawerSheet(
                                 modifier = Modifier.fillMaxWidth(0.75f),
-                                //drawerShape = RectangleShape,
                                 drawerContainerColor = MaterialTheme.colorScheme.background
                             ) {
                                 SideBarUser(
@@ -351,7 +350,8 @@ fun SideBarUser(
                 brush = Brush.linearGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.secondary
+                        MaterialTheme.colorScheme.primary,
+                        Color.White
                     )
                 )
             )

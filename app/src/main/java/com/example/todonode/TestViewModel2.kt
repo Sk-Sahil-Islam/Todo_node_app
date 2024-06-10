@@ -31,7 +31,6 @@ class TestViewModel2 @Inject constructor(
         initialValue = ""
     )
 
-
     fun loginUser(loginRequest: LoginRequest) = viewModelScope.launch {
         _loginState.value = LoginUiState(isLoading = true)
         try {

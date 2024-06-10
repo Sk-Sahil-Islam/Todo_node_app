@@ -1,5 +1,7 @@
 package com.example.todonode.presentation.home_screen.componants
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,13 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDateTime
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TodoItem(
     modifier: Modifier = Modifier,
     title: String,
     description: String,
-    dueTime: LocalDateTime,
-    createdAt: LocalDateTime,
+    deadline: LocalDateTime,
+    createdAt: LocalDateTime = LocalDateTime.now(),
     isCompleted: Boolean,
     onItemClicked: () -> Unit,
     onCheckBoxClicked: () -> Unit
@@ -76,24 +79,10 @@ fun TodoItem(
                 CreatedAt(createdAt = createdAt)
                 Spacer(modifier = Modifier.weight(1f))
                 DueTime(
-                    dueTime = dueTime,
+                    dueTime = deadline,
                     currentDateTime = LocalDateTime.now()
                 )
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun TodoItemPreview() {
-    TodoItem(
-        title = "Title",
-        description = "Description",
-        dueTime = LocalDateTime.parse("2025-01-14T15:32:56.000"),
-        createdAt = LocalDateTime.now(),
-        isCompleted = false,
-        onItemClicked = {},
-        onCheckBoxClicked = {}
-    )
 }

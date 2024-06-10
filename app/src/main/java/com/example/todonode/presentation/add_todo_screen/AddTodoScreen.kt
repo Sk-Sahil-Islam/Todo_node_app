@@ -1,7 +1,10 @@
 package com.example.todonode.presentation.add_todo_screen
 
 import android.icu.util.Calendar
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +37,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,27 +46,37 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
+import com.example.todonode.TestAddViewModel
+import com.example.todonode.data.remote.dto.TodoRequest
+import com.example.todonode.presentation.Screen
 import com.example.todonode.presentation.add_todo_screen.componants.CustomTextField
 import com.example.todonode.presentation.add_todo_screen.componants.TimePickerDialog
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTodoScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: TestAddViewModel = hiltViewModel()
 ) {
     val lifeCycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val state by viewModel.addTodoState.collectAsState()
 
     var task by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -78,13 +93,31 @@ fun AddTodoScreen(
     )
     var showTimePicker by remember { mutableStateOf(false) }
 
-    var combinedDateTime by remember {
+    var combinedDate by remember {
         mutableStateOf(
             Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, 23)
                 set(Calendar.MINUTE, 59)
             }.time
         )
+    }
+
+
+    LaunchedEffect(state.error) {
+        if(state.error.isNotBlank())
+            Toast.makeText(context, state.error, Toast.LENGTH_SHORT).show()
+    }
+    LaunchedEffect(state.response?.success) {
+        if (state.response?.success == true) {
+            Toast.makeText(context, state.response!!.msg, Toast.LENGTH_SHORT).show()
+
+            val currentState = lifeCycleOwner.lifecycle.currentState
+            if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                navController.navigate(Screen.HomeScreen.route){
+                    popUpTo(0)
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -109,7 +142,18 @@ fun AddTodoScreen(
                 },
                 actions = {
                     IconButton(onClick = {
+//                        val instant = combinedDate.toInstant()
+//                        val zoneId = ZoneId.systemDefault()
+//                        val localDateTime = LocalDateTime.ofInstant(instant, zoneId)
+//                        Log.e("LocalDateTime", localDateTime.toString())
 
+                        viewModel.addTodo(
+                            todo = TodoRequest(
+                                title = task,
+                                description = description,
+                                deadline = combinedDate
+                            )
+                        )
                     }) {
                         Icon(
                             modifier = Modifier.size(30.dp),
@@ -139,7 +183,7 @@ fun AddTodoScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = dateFormatterWithTime.format(combinedDateTime),
+                    text = dateFormatterWithTime.format(combinedDate),
                     fontWeight = FontWeight.Bold
                 )
 
@@ -283,7 +327,7 @@ fun AddTodoScreen(
                                 }
 
                                 selectedTime.set(Calendar.DATE, selectedDate.get(Calendar.DATE))
-                                combinedDateTime = selectedTime.time
+                                combinedDate = selectedTime.time
                             }
                         ) { Text("OK") }
                     },
@@ -291,6 +335,14 @@ fun AddTodoScreen(
                 )
                 {
                     TimePicker(state = timePickerState)
+                }
+            }
+
+            if(state.isLoading) {
+                Box(
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator()
                 }
             }
         }
