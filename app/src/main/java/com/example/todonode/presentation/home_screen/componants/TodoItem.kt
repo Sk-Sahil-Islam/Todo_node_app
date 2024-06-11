@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDateTime
@@ -40,9 +39,9 @@ fun SharedTransitionScope.TodoItem(
     description: String,
     deadline: LocalDateTime,
     createdAt: LocalDateTime = LocalDateTime.now(),
-    isCompleted: Boolean,
+    isFinished: Boolean,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onItemClicked: (String, String, String, String) -> Unit,
+    onItemClicked: (String, String, String, String, Boolean) -> Unit,
     onCheckBoxClicked: () -> Unit
 ) {
     Box(
@@ -53,7 +52,8 @@ fun SharedTransitionScope.TodoItem(
                 id,
                 title,
                 description,
-                deadline.toString()
+                deadline.toString(),
+                isFinished
             ) }
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f))
             .padding(12.dp)
@@ -83,7 +83,7 @@ fun SharedTransitionScope.TodoItem(
                 )
                 Spacer(modifier = Modifier.size(10.dp))
                 IsDone(
-                    isDone = isCompleted,
+                    isDone = isFinished,
                     onClick = onCheckBoxClicked
                 )
             }

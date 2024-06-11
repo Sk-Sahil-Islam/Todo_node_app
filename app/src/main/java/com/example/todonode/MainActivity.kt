@@ -8,7 +8,6 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -66,17 +66,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
-import com.example.todonode.domain.model.UserModel
+import com.example.todonode.data.remote.dto.UserAuth
 import com.example.todonode.presentation.Screen
 import com.example.todonode.presentation.add_todo_screen.AddTodoScreen
-import com.example.todonode.presentation.completed_screen.CompletedScreen
+import com.example.todonode.presentation.completed_screen.FinishedScreen
 import com.example.todonode.presentation.home_screen.HomeScreen
 import com.example.todonode.presentation.login_screen.LoginScreen
 import com.example.todonode.presentation.signup_screen.SignUpScreen
 import com.example.todonode.presentation.update_todo_screen.UpdateTodoScreen
 import com.example.todonode.ui.theme.BackgroundDark
-import com.example.todonode.ui.theme.LoginPrimaryDark
-import com.example.todonode.ui.theme.MyGreen
 import com.example.todonode.ui.theme.TodoNodeTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -92,6 +90,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             TodoNodeTheme {
                 val viewModel2: TestViewModel2 by viewModels()
+                val state by viewModel2.loginState.collectAsState()
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                             Icons.Outlined.CheckCircle,
                             Icons.Default.CheckCircle,
                             onClick = {
-                                navController.navigate(Screen.CompletedScreen.route)
+                                navController.navigate(Screen.FinishedScreen.route)
                             }
                         )
                     )
@@ -144,10 +144,12 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 SideBarUser(
                                     modifier = Modifier.fillMaxWidth(),
-                                    user = UserModel(
-                                        avatar = "https://avatars.githubusercontent.com/u/77445921?v=4",
-                                        email = "user@gmail.com",
-                                        userName = "User name"
+                                    user = UserAuth(
+                                        avatar = state.user?.avatar ?: "https://avatars.githubusercontent.com/u/77445921?v=4",
+                                        email = state.user?.email ?: "user@gmail.com",
+                                        userName = state.user?.userName ?: "User name",
+                                        _id = state.user?._id ?: "1",
+                                        __v = state.user?.__v ?: 0
                                     )
                                 )
                                 items.forEachIndexed { index, item ->
@@ -300,11 +302,15 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier.padding(paddingValues)
                                         )
                                     }
-                                    composable(Screen.CompletedScreen.route) {
-                                        CompletedScreen(modifier = Modifier.padding(paddingValues))
+                                    composable(Screen.FinishedScreen.route) {
+                                        FinishedScreen(
+                                            navController = navController,
+                                            modifier = Modifier.padding(paddingValues),
+                                            animatedVisibilityScope = this
+                                        )
                                     }
                                     composable(
-                                        Screen.UpdateTodoScreen.route + "?id={id}&title={title}&description={description}&deadline={deadline}",
+                                        Screen.UpdateTodoScreen.route + "?id={id}&title={title}&description={description}&deadline={deadline}&isFinished={isFinished}",
                                         arguments = listOf(
                                             navArgument(name = "id") {
                                                 type = NavType.StringType
@@ -321,6 +327,10 @@ class MainActivity : ComponentActivity() {
                                             navArgument(name = "deadline") {
                                                 type = NavType.StringType
                                                 nullable = true
+                                            },
+                                            navArgument(name = "isFinished") {
+                                                type = NavType.BoolType
+                                                defaultValue = false
                                             }
                                         ),
                                     ) {
@@ -328,12 +338,18 @@ class MainActivity : ComponentActivity() {
                                         val title = it.arguments?.getString("title")
                                         val description = it.arguments?.getString("description")
                                         val deadline = it.arguments?.getString("deadline")
+                                        val isFinished = it.arguments?.getBoolean("isFinished")
                                         UpdateTodoScreen(
                                             navController = navController,
                                             todoId = id.orEmpty(),
-                                            todoTitle = String(Base64.getUrlDecoder().decode(title)),
-                                            todoDescription = String(Base64.getUrlDecoder().decode(description)),
+                                            todoTitle = String(
+                                                Base64.getUrlDecoder().decode(title)
+                                            ),
+                                            todoDescription = String(
+                                                Base64.getUrlDecoder().decode(description)
+                                            ),
                                             todoDeadline = deadline.orEmpty(),
+                                            isFinished = isFinished ?: false,
                                             animatedVisibilityScope = this
                                         )
                                     }
@@ -389,7 +405,7 @@ data class NavigationItems(
 @Composable
 fun SideBarUser(
     modifier: Modifier = Modifier,
-    user: UserModel
+    user: UserAuth
 ) {
     Box(
         modifier = modifier
@@ -417,12 +433,18 @@ fun SideBarUser(
                         .size(60.dp)
                         .clip(CircleShape),
                     model = user.avatar,
-                    //placeholder = painterResource(id = R.drawable.person_ic),
+                    placeholder = painterResource(id = R.drawable.ic_profile),
                     contentDescription = "profile",
+                    error = painterResource(id = R.drawable.ic_profile),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.size(10.dp))
-                Text(text = user.userName, fontSize = 18.sp, color = BackgroundDark, fontWeight = FontWeight.Bold)
+                Text(
+                    text = user.userName,
+                    fontSize = 18.sp,
+                    color = BackgroundDark,
+                    fontWeight = FontWeight.Bold
+                )
                 Text(text = user.email, fontSize = 14.sp, color = BackgroundDark)
             }
         }

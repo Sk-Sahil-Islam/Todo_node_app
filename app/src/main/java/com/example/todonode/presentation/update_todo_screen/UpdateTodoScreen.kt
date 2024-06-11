@@ -73,6 +73,7 @@ import com.example.todonode.presentation.add_todo_screen.componants.CustomTextFi
 import com.example.todonode.presentation.add_todo_screen.componants.TimePickerDialog
 import com.example.todonode.ui.theme.BackgroundDark
 import com.example.todonode.ui.theme.LoginPrimaryDark
+import com.example.todonode.ui.theme.MyGray
 import com.example.todonode.ui.theme.MyGreen
 import com.example.todonode.ui.theme.MyRed
 import java.text.SimpleDateFormat
@@ -90,6 +91,7 @@ fun SharedTransitionScope.UpdateTodoScreen(
     todoTitle: String,
     todoDescription: String,
     todoDeadline: String,
+    isFinished: Boolean,
     animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: TestUpdateViewModel = hiltViewModel()
 ) {
@@ -108,6 +110,8 @@ fun SharedTransitionScope.UpdateTodoScreen(
     val datePickerState = rememberDatePickerState(initialDateInMillis)
     var showDatePicker by remember { mutableStateOf(false) }
 
+    var initialFinished by remember { mutableStateOf(isFinished) }
+
     var initialHour = LocalDateTime.parse(todoDeadline).hour
     var initialMinute = LocalDateTime.parse(todoDeadline).minute
 
@@ -121,6 +125,7 @@ fun SharedTransitionScope.UpdateTodoScreen(
         )
     }
 
+    val isDeleted by viewModel.isDeleted.collectAsState()
 
     LaunchedEffect(state.error) {
         if (state.error.isNotBlank())
@@ -129,6 +134,19 @@ fun SharedTransitionScope.UpdateTodoScreen(
     LaunchedEffect(state.response?.success) {
         if (state.response?.success == true) {
             Toast.makeText(context, state.response!!.message, Toast.LENGTH_SHORT).show()
+
+            val currentState = lifeCycleOwner.lifecycle.currentState
+            if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                navController.navigate(Screen.HomeScreen.route) {
+                    popUpTo(0)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
+            Toast.makeText(context, "Delete successful", Toast.LENGTH_SHORT).show()
 
             val currentState = lifeCycleOwner.lifecycle.currentState
             if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
@@ -167,7 +185,8 @@ fun SharedTransitionScope.UpdateTodoScreen(
                             todo = TodoRequest(
                                 title = task,
                                 description = description,
-                                deadline = combinedDate
+                                deadline = combinedDate,
+                                finished = initialFinished
                             )
                         )
                     }) {
@@ -188,7 +207,9 @@ fun SharedTransitionScope.UpdateTodoScreen(
             ) {
                 FloatingActionButton(
                     onClick = {
-
+                        viewModel.deleteTodo(
+                            todoId
+                        )
                     },
                     containerColor = MyRed
                 ) {
@@ -203,17 +224,31 @@ fun SharedTransitionScope.UpdateTodoScreen(
 
                 ExtendedFloatingActionButton(
                     onClick = {
-
+                        initialFinished = !initialFinished
                     },
                     icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_task_alt),
-                            contentDescription = "completed",
-                            tint = BackgroundDark
-                        )
+                        if (initialFinished) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_exclamation),
+                                contentDescription = "unfinished",
+                                tint = BackgroundDark
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_task_alt),
+                                contentDescription = "completed",
+                                tint = BackgroundDark
+                            )
+                        }
                     },
-                    text = { Text("Finished!", color = BackgroundDark) },
-                    containerColor = LoginPrimaryDark
+                    text = {
+                        if (initialFinished) {
+                            Text("Unfinished", color = BackgroundDark, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Text("Finished", color = BackgroundDark, fontWeight = FontWeight.SemiBold)
+                        }
+                    },
+                    containerColor = if(initialFinished) MyGray else LoginPrimaryDark
                 )
             }
         }
@@ -268,7 +303,8 @@ fun SharedTransitionScope.UpdateTodoScreen(
                 }
 
                 CustomTextField(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .sharedElement(
                             state = rememberSharedContentState(key = "title/${todoId}"),
                             animatedVisibilityScope = animatedVisibilityScope,
@@ -297,13 +333,15 @@ fun SharedTransitionScope.UpdateTodoScreen(
                 )
 
                 CustomTextField(
-                    modifier = Modifier.fillMaxWidth().sharedElement(
-                        state = rememberSharedContentState(key = "description/${todoId}"),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        boundsTransform = { _, _ ->
-                            tween(1000)
-                        }
-                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sharedElement(
+                            state = rememberSharedContentState(key = "description/${todoId}"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            boundsTransform = { _, _ ->
+                                tween(1000)
+                            }
+                        ),
                     value = description,
                     onValueChange = {
                         description = it
@@ -406,14 +444,15 @@ fun SharedTransitionScope.UpdateTodoScreen(
                     TimePicker(state = timePickerState)
                 }
             }
+        }
+    }
 
-            if (state.isLoading) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+    if (state.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     }
 }

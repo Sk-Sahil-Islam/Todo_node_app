@@ -19,6 +19,7 @@ class TestUpdateViewModel @Inject constructor(
 ): ViewModel() {
     private val _updateState = MutableStateFlow(AddTodoUiState())
     val updateState: StateFlow<AddTodoUiState> = _updateState
+    val isDeleted = MutableStateFlow(false)
 
     fun updateTodo(id: String, todo: TodoRequest) = viewModelScope.launch {
         _updateState.value = AddTodoUiState(isLoading = true)
@@ -37,4 +38,13 @@ class TestUpdateViewModel @Inject constructor(
         }
     }
 
+    fun deleteTodo(id: String) = viewModelScope.launch {
+        _updateState.value = AddTodoUiState(isLoading = true)
+        try {
+            val result = repository.deleteTodo(id)
+            isDeleted.value = result.success
+        } catch (e: Exception) {
+            _updateState.value = AddTodoUiState(error = e.toString() ?: "Unknown error")
+        }
+    }
 }

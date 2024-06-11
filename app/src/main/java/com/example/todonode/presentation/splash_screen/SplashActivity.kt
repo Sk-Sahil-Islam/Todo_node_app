@@ -73,7 +73,7 @@ class SplashActivity : ComponentActivity() {
                 targetValue = 1f,
                 animationSpec = tween(500)
             )
-            delay(500)
+            delay(1000)
             val intent = Intent(this@SplashActivity, MainActivity::class.java)
             intent.putExtra("user", user.value)
             startActivity(intent)
