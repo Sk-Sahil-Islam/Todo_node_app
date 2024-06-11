@@ -3,6 +3,10 @@ package com.example.todonode.presentation.home_screen
 import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,12 +36,15 @@ import com.example.todonode.TestHomeViewModel
 import com.example.todonode.presentation.Screen
 import com.example.todonode.presentation.home_screen.componants.TodoItem
 import java.time.LocalDateTime
+import java.util.Base64
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HomeScreen(
+fun SharedTransitionScope.HomeScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: TestHomeViewModel = hiltViewModel()
 ) {
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -84,17 +91,21 @@ fun HomeScreen(
 
                 items(todos) { todo ->
                     TodoItem(
+                        id = todo._id,
                         title = todo.title,
                         description = todo.description,
                         deadline = LocalDateTime.parse(todo.deadline.dropLast(1)),
                         createdAt = LocalDateTime.parse(todo.createdAt.dropLast(1)),
                         isCompleted = false,
-                        onItemClicked = {
-
+                        onItemClicked = { id, title, description, deadline ->
+                            val titleString = Base64.getUrlEncoder().encodeToString(title.toByteArray())
+                            val bodyString = Base64.getUrlEncoder().encodeToString(description.toByteArray())
+                            navController.navigate(Screen.UpdateTodoScreen.route + "?id=$id&title=$titleString&description=$bodyString&deadline=$deadline")
                         },
                         onCheckBoxClicked = {
 
-                        }
+                        },
+                        animatedVisibilityScope = animatedVisibilityScope
                     )
                 }
 

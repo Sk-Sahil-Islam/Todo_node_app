@@ -11,6 +11,8 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface TodoApi {
 
@@ -38,4 +40,11 @@ interface TodoApi {
         @Header("Content-Type") contentType: String = "application/json",
         @Header("Authorization") token: String
     ): TodoListResponse
+
+    @PUT("api/todo/{id}")
+    suspend fun updateTodo(
+        @Path("id") id: String,
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body todo: TodoRequest
+    ): TodoResponse
 }

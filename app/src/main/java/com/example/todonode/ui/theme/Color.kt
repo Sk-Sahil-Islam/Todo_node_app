@@ -35,10 +35,10 @@ val LinkLight = Color(0xFF4876C4)
 val LinkDark = Color(0xFF68C8F5)
 
 
-val MyYellow = Color(0xFFE4E270)
-val MyRed = Color(0xFFF07878)
+val MyYellow = Color(0xFFE9E77F)
+val MyRed = Color(0xFFE47B7B)
 val MyGray = Color(0xFFA0A0A0)
-val MyGreen = Color(0xFF8FD581)
+val MyGreen = Color(0xFF97DA8B)
 
 val BackgroundDark = Color(0xFF121212)
 val BackgroundLight = Color(0xFFFFFBFE)

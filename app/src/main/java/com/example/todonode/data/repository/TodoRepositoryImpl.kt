@@ -28,4 +28,8 @@ class TodoRepositoryImpl(
     override suspend fun getTodos(token: String): TodoListResponse {
         return todoApi.getTodos(token = token)
     }
+
+    override suspend fun updateTodo(id: String, todo: TodoRequest): TodoResponse {
+        return todoApi.updateTodo(todo = todo, id = id)
+    }
 }

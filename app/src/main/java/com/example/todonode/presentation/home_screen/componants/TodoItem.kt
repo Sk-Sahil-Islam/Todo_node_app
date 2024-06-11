@@ -2,6 +2,10 @@ package com.example.todonode.presentation.home_screen.componants
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,29 +24,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDateTime
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TodoItem(
+fun SharedTransitionScope.TodoItem(
     modifier: Modifier = Modifier,
+    id: String,
     title: String,
     description: String,
     deadline: LocalDateTime,
     createdAt: LocalDateTime = LocalDateTime.now(),
     isCompleted: Boolean,
-    onItemClicked: () -> Unit,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onItemClicked: (String, String, String, String) -> Unit,
     onCheckBoxClicked: () -> Unit
 ) {
     Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onItemClicked() }
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
+            .clickable { onItemClicked(
+                id,
+                title,
+                description,
+                deadline.toString()
+            ) }
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f))
             .padding(12.dp)
     ) {
 
@@ -52,14 +65,23 @@ fun TodoItem(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
+                    modifier = Modifier.sharedElement(
+                        state = rememberSharedContentState(key = "title/${id}"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        boundsTransform = { _, _ ->
+                            tween(1000)
+                        }
+                    ),
                     text = title,
                     fontSize = 21.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.size(10.dp))
                 IsDone(
                     isDone = isCompleted,
                     onClick = onCheckBoxClicked
@@ -67,8 +89,17 @@ fun TodoItem(
             }
             Spacer(modifier = Modifier.size(10.dp))
             Text(
+                modifier = Modifier.sharedElement(
+                    state = rememberSharedContentState(key = "description/${id}"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    boundsTransform = { _, _ ->
+                        tween(1000)
+                    }
+                ),
                 text = description,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                maxLines = 6,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.size(10.dp))
             Row(

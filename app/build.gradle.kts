@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -81,12 +81,14 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     kapt("androidx.hilt:hilt-compiler:1.1.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-    implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation(libs.androidx.navigation.compose)
 
     //datastore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     //animation
-    implementation(libs.androidx.animation)
+    //implementation(libs.androidx.animation)
     //Coil
     implementation(libs.coil.compose)
+    //implementation(libs.androidx.compose.animation)
+    implementation("androidx.compose.animation:animation:1.7.0-beta02")
 }

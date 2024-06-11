@@ -16,4 +16,6 @@ interface TodoRepository {
     suspend fun addTodo(token: String, todo: TodoRequest): TodoResponse
 
     suspend fun getTodos(token: String): TodoListResponse
+
+    suspend fun updateTodo(id: String, todo: TodoRequest): TodoResponse
 }

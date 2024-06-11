@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,10 +59,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.example.todonode.domain.model.UserModel
 import com.example.todonode.presentation.Screen
@@ -68,15 +73,20 @@ import com.example.todonode.presentation.completed_screen.CompletedScreen
 import com.example.todonode.presentation.home_screen.HomeScreen
 import com.example.todonode.presentation.login_screen.LoginScreen
 import com.example.todonode.presentation.signup_screen.SignUpScreen
+import com.example.todonode.presentation.update_todo_screen.UpdateTodoScreen
 import com.example.todonode.ui.theme.BackgroundDark
+import com.example.todonode.ui.theme.LoginPrimaryDark
+import com.example.todonode.ui.theme.MyGreen
 import com.example.todonode.ui.theme.TodoNodeTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Base64
 
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
-    @RequiresApi(Build.VERSION_CODES.O)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -259,39 +269,77 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         ) { paddingValues ->
+                            SharedTransitionLayout {
 
-                            NavHost(
-                                navController = navController,
-                                startDestination = if (user.isBlank()) Screen.LoginScreen.route else Screen.HomeScreen.route
-                            ) {
-                                composable(Screen.LoginScreen.route) {
-                                    LoginScreen(
-                                        navController = navController,
-                                        modifier = Modifier.padding(paddingValues)
-                                    )
-                                }
-                                composable(Screen.SignUpScreen.route) {
-                                    SignUpScreen(
-                                        navController = navController,
-                                        modifier = Modifier.padding(paddingValues)
-                                    )
-                                }
-                                composable(Screen.HomeScreen.route) {
-                                    HomeScreen(
-                                        navController = navController,
-                                        modifier = Modifier.padding(paddingValues)
-                                    )
-                                }
-                                composable(Screen.AddTodoScreen.route) {
-                                    AddTodoScreen(
-                                        navController = navController,
-                                        modifier = Modifier.padding(paddingValues)
-                                    )
-                                }
-                                composable(Screen.CompletedScreen.route) {
-                                    CompletedScreen(modifier = Modifier.padding(paddingValues))
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = if (user.isBlank()) Screen.LoginScreen.route else Screen.HomeScreen.route
+                                ) {
+                                    composable(Screen.LoginScreen.route) {
+                                        LoginScreen(
+                                            navController = navController,
+                                            modifier = Modifier.padding(paddingValues)
+                                        )
+                                    }
+                                    composable(Screen.SignUpScreen.route) {
+                                        SignUpScreen(
+                                            navController = navController,
+                                            modifier = Modifier.padding(paddingValues)
+                                        )
+                                    }
+                                    composable(Screen.HomeScreen.route) {
+                                        HomeScreen(
+                                            navController = navController,
+                                            modifier = Modifier.padding(paddingValues),
+                                            animatedVisibilityScope = this
+                                        )
+                                    }
+                                    composable(Screen.AddTodoScreen.route) {
+                                        AddTodoScreen(
+                                            navController = navController,
+                                            modifier = Modifier.padding(paddingValues)
+                                        )
+                                    }
+                                    composable(Screen.CompletedScreen.route) {
+                                        CompletedScreen(modifier = Modifier.padding(paddingValues))
+                                    }
+                                    composable(
+                                        Screen.UpdateTodoScreen.route + "?id={id}&title={title}&description={description}&deadline={deadline}",
+                                        arguments = listOf(
+                                            navArgument(name = "id") {
+                                                type = NavType.StringType
+                                                nullable = true
+                                            },
+                                            navArgument(name = "title") {
+                                                type = NavType.StringType
+                                                nullable = true
+                                            },
+                                            navArgument(name = "description") {
+                                                type = NavType.StringType
+                                                nullable = true
+                                            },
+                                            navArgument(name = "deadline") {
+                                                type = NavType.StringType
+                                                nullable = true
+                                            }
+                                        ),
+                                    ) {
+                                        val id = it.arguments?.getString("id")
+                                        val title = it.arguments?.getString("title")
+                                        val description = it.arguments?.getString("description")
+                                        val deadline = it.arguments?.getString("deadline")
+                                        UpdateTodoScreen(
+                                            navController = navController,
+                                            todoId = id.orEmpty(),
+                                            todoTitle = String(Base64.getUrlDecoder().decode(title)),
+                                            todoDescription = String(Base64.getUrlDecoder().decode(description)),
+                                            todoDeadline = deadline.orEmpty(),
+                                            animatedVisibilityScope = this
+                                        )
+                                    }
                                 }
                             }
+
                         }
                     }
                 }

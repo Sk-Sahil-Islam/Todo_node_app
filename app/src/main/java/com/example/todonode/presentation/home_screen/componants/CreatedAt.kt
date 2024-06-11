@@ -25,7 +25,7 @@ fun CreatedAt(
     modifier: Modifier = Modifier,
     createdAt: LocalDateTime
 ) {
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm")
+    val formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm")
     val formattedDateTime = createdAt.format(formatter)
     Box(
         modifier = modifier,

@@ -2,7 +2,6 @@ package com.example.todonode.presentation.add_todo_screen
 
 import android.icu.util.Calendar
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -46,11 +45,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,8 +59,6 @@ import com.example.todonode.presentation.Screen
 import com.example.todonode.presentation.add_todo_screen.componants.CustomTextField
 import com.example.todonode.presentation.add_todo_screen.componants.TimePickerDialog
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -81,14 +76,16 @@ fun AddTodoScreen(
     var task by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    val dateFormatter = SimpleDateFormat("dd MM yyyy", Locale.getDefault())
     val dateFormatterWithTime = SimpleDateFormat("dd MM yyyy HH:mm", Locale.getDefault())
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
+
+    var initialHour = 23
+    var initialMinute = 59
     val timePickerState = rememberTimePickerState(
-        initialHour = 23,
-        initialMinute = 59,
+        initialHour = initialHour,
+        initialMinute = initialMinute,
         is24Hour = true
     )
     var showTimePicker by remember { mutableStateOf(false) }
@@ -109,7 +106,7 @@ fun AddTodoScreen(
     }
     LaunchedEffect(state.response?.success) {
         if (state.response?.success == true) {
-            Toast.makeText(context, state.response!!.msg, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Successfully added", Toast.LENGTH_SHORT).show()
 
             val currentState = lifeCycleOwner.lifecycle.currentState
             if (currentState.isAtLeast(Lifecycle.State.RESUMED)) {
@@ -142,10 +139,6 @@ fun AddTodoScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-//                        val instant = combinedDate.toInstant()
-//                        val zoneId = ZoneId.systemDefault()
-//                        val localDateTime = LocalDateTime.ofInstant(instant, zoneId)
-//                        Log.e("LocalDateTime", localDateTime.toString())
 
                         viewModel.addTodo(
                             todo = TodoRequest(
@@ -216,7 +209,6 @@ fun AddTodoScreen(
 
                 }
 
-
                 CustomTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = task,
@@ -265,23 +257,21 @@ fun AddTodoScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                val selectedDate = Calendar.getInstance().apply {
+                                val selectedDateTime = Calendar.getInstance().apply {
                                     timeInMillis = datePickerState.selectedDateMillis!!
                                 }
-                                if (selectedDate.get(Calendar.DATE) == selectedDate.get(Calendar.DATE) || selectedDate.after(
-                                        Calendar.getInstance()
-                                    )
-                                ) {
-                                    Toast.makeText(
-                                        context,
-                                        "Selected date ${dateFormatter.format(selectedDate.time)} saved",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+
+                                selectedDateTime.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                selectedDateTime.set(Calendar.MINUTE, timePickerState.minute)
+
+                                if (selectedDateTime.after(Calendar.getInstance().time)) {
+
+                                    combinedDate = selectedDateTime.time
                                     showDatePicker = false
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        "Selected date should be after today, please select again",
+                                        "Selected time should be after current time, please select again",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -299,21 +289,17 @@ fun AddTodoScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                val selectedTime = Calendar.getInstance().apply {
-                                    set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                                    set(Calendar.MINUTE, timePickerState.minute)
-                                }
-                                if (selectedTime.after(Calendar.getInstance())) {
-                                    Toast.makeText(
-                                        context,
-                                        "Selected time ${
-                                            SimpleDateFormat(
-                                                "hh:mm",
-                                                Locale.getDefault()
-                                            ).format(selectedTime.time)
-                                        } saved",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                val selectedDateTime = Calendar.getInstance()
+                                    .apply { timeInMillis = datePickerState.selectedDateMillis!! }
+
+                                selectedDateTime.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                selectedDateTime.set(Calendar.MINUTE, timePickerState.minute)
+
+                                if (selectedDateTime.after(Calendar.getInstance().time)) {
+                                    combinedDate = selectedDateTime.time
+                                    initialHour = timePickerState.hour
+                                    initialMinute = timePickerState.minute
+
                                     showTimePicker = false
                                 } else {
                                     Toast.makeText(
@@ -322,12 +308,6 @@ fun AddTodoScreen(
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
-                                val selectedDate = Calendar.getInstance().apply {
-                                    timeInMillis = datePickerState.selectedDateMillis!!
-                                }
-
-                                selectedTime.set(Calendar.DATE, selectedDate.get(Calendar.DATE))
-                                combinedDate = selectedTime.time
                             }
                         ) { Text("OK") }
                     },
